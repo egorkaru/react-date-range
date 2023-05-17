@@ -12,6 +12,8 @@ class DateInput extends PureComponent {
       changed: false,
       value: this.formatDate(props),
     };
+
+    this.inputRef = React.createRef();
   }
 
   componentDidUpdate(prevProps) {
@@ -79,6 +81,7 @@ class DateInput extends PureComponent {
           onChange={this.onChange}
           onBlur={this.onBlur}
           onFocus={onFocus}
+          ref={this.inputRef}
         />
         {invalid && <span className="rdrWarning">&#9888;</span>}
       </span>

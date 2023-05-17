@@ -6,7 +6,7 @@ import DateInput from '../DateInput';
 import { calcFocusDate, generateStyles, getMonthDisplayRange } from '../../utils';
 import classnames from 'classnames';
 import ReactList from 'react-list';
-import { shallowEqualObjects } from 'shallow-equal';
+import { shallowEqualObjects, shallowEqualArrays } from 'shallow-equal';
 import {
   addMonths,
   subMonths,
@@ -49,6 +49,8 @@ class Calendar extends PureComponent {
       },
       scrollArea: this.calcScrollArea(props),
     };
+
+    this.dateDisplay = {};
   }
   getMonthNames() {
     return [...Array(12).keys()].map(i => this.props.locale.localize.month(i));
@@ -149,6 +151,18 @@ class Calendar extends PureComponent {
 
     if (!shallowEqualObjects(prevProps.scroll, this.props.scroll)) {
       this.setState({ scrollArea: this.calcScrollArea(this.props) });
+    }
+
+    if (!shallowEqualArrays(prevProps.focusedRange, this.props.focusedRange)) {
+      const focusedRange = this.props.focusedRange;
+
+      if (
+        this.dateDisplay[focusedRange[0]] &&
+        this.dateDisplay[focusedRange[0]][focusedRange[1]] &&
+        this.dateDisplay[focusedRange[0]][focusedRange[1]].inputRef.current
+      ) {
+        this.dateDisplay[focusedRange[0]][focusedRange[1]].inputRef.current.focus();
+      }
     }
   }
 
@@ -266,6 +280,16 @@ class Calendar extends PureComponent {
       </div>
     );
   }
+  setDateDisplayRefs = (rangeIndex, dateIndex, target) => {
+    if (!this.dateDisplay[rangeIndex]) {
+      this.dateDisplay[rangeIndex] = {
+        [0]: null,
+        [1]: null,
+      };
+    }
+
+    this.dateDisplay[rangeIndex][dateIndex] = target;
+  }
   renderDateDisplay = () => {
     const {
       focusedRange,
@@ -309,6 +333,7 @@ class Calendar extends PureComponent {
                 }
                 onChange={this.onDragSelectionEnd}
                 onFocus={() => this.handleRangeFocusChange(i, 0)}
+                ref={(target) => this.setDateDisplayRefs(i, 0, target)}
               />
               <DateInput
                 className={classnames(styles.dateDisplayItem, {
@@ -327,6 +352,7 @@ class Calendar extends PureComponent {
                 }
                 onChange={this.onDragSelectionEnd}
                 onFocus={() => this.handleRangeFocusChange(i, 1)}
+                ref={(target) => this.setDateDisplayRefs(i, 1, target)}
               />
             </div>
           );
@@ -371,6 +397,7 @@ class Calendar extends PureComponent {
       });
     }
   };
+
   onDragSelectionMove = date => {
     const { drag } = this.state;
     if (!drag.status || !this.props.dragSelectionEnabled) return;
